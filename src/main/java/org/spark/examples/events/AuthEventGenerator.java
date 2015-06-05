@@ -72,7 +72,7 @@ public class AuthEventGenerator implements IGenerator{
      * @param successful Whether the authorization should be successful or not.
      * @return A line with the log.
      */
-    @Override
+
     public String generateRandomEvent(boolean successful){
         StringBuilder sb = new StringBuilder(new Date().toString());
         sb.append(separator);
