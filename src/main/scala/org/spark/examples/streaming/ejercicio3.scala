@@ -34,7 +34,7 @@ object ejercicio3 {
   /**
    * Threshold that determines when a number of failed auth entries is considered an attack.
    */
-  val ThresholdAuth = 1;
+  val ThresholdAuth = 18;
 
   /**
    * Threshold that determines when a number of failed web access entries is considered an attack.
@@ -74,25 +74,39 @@ object ejercicio3 {
     })
 
     val filteredRDD = numberEvents_authRDD.foreachRDD(rdds=>{
-      val filtrado = rdds.filter(aut=>aut.Message.contains("failed"))
+
+      //primero filtro los que son ataque y los sumo
+      val comunRDD =rdds.filter(aut=>aut.Message.contains("failed"))
+        .map(x=>(x.Source,1))
+        .reduceByKey((acum,nuevo)=>acum+nuevo)
+
+      // Imprimo el total de los ataques por cada servidor
+      comunRDD.foreach(host=>println("Número de ataques Total : " + host._1,host._2))
+
+      // ahora con el ThresholdAuth que lo he subido a 18 para que no me
+      // devuelva todos los servidores
+
+      comunRDD.filter(num => num._2>=ThresholdAuth)
+        .foreach(host=>println("Num de ataques que superan el umbral: " + host._1,host._2))
+
       println("")
-      filtrado.map(x=>(x.Source,1)).reduceByKey((acum,nuevo)=>acum+nuevo).foreach(host=>println("Filtrado: " + host._1,host._2))
-      rdds.map(x=>(x.Source,1)).reduceByKey((acum,nuevo)=>acum+nuevo).foreach(host=>println("Total: " + host._1,host._2))
-      println("")
+
     })
 
-/*
-    numberEvents_authRDD.foreachRDD(x=>x.take(1).map(x=>{
-      println("llamada ")
-      println("*********")
-      println("Mensaje: " + x.Message)
-      println("Process: " + x.Process)
-      println("Source: " + x.Source)
-      println("Timestamp: " + x.Timestamp)
-      println("")
-    }
-    ))
-    */
+
+
+    /*
+        numberEvents_authRDD.foreachRDD(x=>x.take(1).map(x=>{
+          println("llamada ")
+          println("*********")
+          println("Mensaje: " + x.Message)
+          println("Process: " + x.Process)
+          println("Source: " + x.Source)
+          println("Timestamp: " + x.Timestamp)
+          println("")
+        }
+        ))
+        */
 
 
 

@@ -16,15 +16,20 @@
 
 package org.spark.examples.streaming
 
+
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.{Seconds, StreamingContext}
+import java.util.Date
+import java.util.Calendar
+import java.text.SimpleDateFormat
 
 /**
  * Code here the solution for the proposed exercises.
  */
-object ejercicio4 {
+object ejercicio5 {
 
   /**
    * Field separator.
@@ -50,8 +55,7 @@ object ejercicio4 {
     val sparkConf = new SparkConf().setMaster("local[4]").setAppName("ReadingLogs_exercise2")
     //Define a SparkStreamingContext with a batch interval of 10 seconds
     val ssc = new StreamingContext(sparkConf, Seconds(10))
-
-
+    ssc.checkpoint("cache/") //Que deje el checkpoint en el directorio caché para no llenar el raiz
 
     //Este no lo uso. Lo cargo en caché para que no me de un error de java que estropea el resultado
     val events = ssc.socketTextStream("localhost", 10002, StorageLevel.MEMORY_AND_DISK_SER)
@@ -63,9 +67,9 @@ object ejercicio4 {
 
     // Voy a usar el de las autorizaciones. hago un print para que me de los tipos de lineas
 
-    // Given the previous stream obtained in Exercise 3, filter those hosts that are already blacklisted in the system.
-    // In order to do that, generate an RDD with the contents of a file that contains:
-
+    // Calculate the accumulated number of web requests per host from *t=0* to the current time. Internally, use the same
+    // structure as before *(host_i, totalNumberRequests)*. Show all elements first, and then show the _top 5_ hosts
+    // with more requests.
 
     val autorizacion = ssc.socketTextStream("localhost", 10001, StorageLevel.MEMORY_AND_DISK_SER)
     val numberEvents_authRDD = autorizacion.map(x => {
@@ -74,30 +78,37 @@ object ejercicio4 {
     })
 
 
-    //Como del ejercicio anterior me salieron los hosts 3 5 6 y 9, los voy a meter en un RDD
+    val updateFunc = (values: Seq[Int], state: Option[Int]) => {
+      val currentCount = values.sum
+      val previousCount = state.getOrElse(0)
+      Some(currentCount + previousCount)
+    }
 
+    //Obtengo la fecha del sistema
 
-    val lista = ssc.sparkContext.parallelize(List("host3","host5","host6","host9"))
-    val atacantes = lista.map(x => (x,0))
-
-
+    val today = Calendar.getInstance().getTime()
 
     //primero filtro los que son ataque y los sumo
 
     val comunRDD =numberEvents_authRDD.filter(x => x.Message.contains("failed"))
       .map(x => (x.Source, 1))
-      .reduceByKeyAndWindow((acum,nuevo)=>acum+nuevo,Seconds(10))
-      .transform(rdd => rdd.join(atacantes).filter(x => x._2._2 == 0).map(x => (x._1,x._2._1)))
-      .foreachRDD(rdd => {
-      println("")
-      println("Numero total de ataques por los servidores de la lista: " + rdd.reduce((x, y) => ("Total", x._2 + y._2))._2)
-      println("")
-      println("Numero de servidores que atacan: " + rdd.count())
-      rdd.reduceByKey((y,z)=>y+z).foreach(x=>println(x._1 + " : " + x._2))
-      println("")
+      .updateStateByKey(updateFunc)
+
+
+
+    comunRDD.foreachRDD(rdd=> {
+
+      println()
+      println(today)
+      rdd.sortBy(x => x._2, false).foreach(x => println("Total " + x._1 + ": " + x._2))
+      println()
     })
+    comunRDD.foreachRDD(rdd=>{
 
-
+      println("TOP 5 " + today + ": ")
+      rdd.sortBy(x=>x._2,false).take(5).foreach(x=>println(x._1 + ": " + x._2))
+      println()
+    })
 
     //Start the streaming context
     ssc.start()
