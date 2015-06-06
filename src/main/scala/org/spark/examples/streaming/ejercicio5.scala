@@ -77,14 +77,14 @@ object ejercicio5 {
       new AuthEvent(arr(0), arr(1), arr(2), arr(3))
     })
 
-
+    //Esta funcion es la que voy a usar para acumular el resultado de cada uno de los streams
     val updateFunc = (values: Seq[Int], state: Option[Int]) => {
       val currentCount = values.sum
       val previousCount = state.getOrElse(0)
       Some(currentCount + previousCount)
     }
 
-    //Obtengo la fecha del sistema
+    //Obtengo la fecha del sistema para imprimirla
 
     val today = Calendar.getInstance().getTime()
 

@@ -16,6 +16,8 @@
 
 package org.spark.examples.streaming
 
+import java.util.Calendar
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.storage.StorageLevel
@@ -79,13 +81,19 @@ object ejercicio1 {
 
     //- Number of authentication events.
 
+
+    //Obtengo la fecha del sistema para imprimirla
+
+    val today = Calendar.getInstance().getTime()
+
     val sucess_wr_eventsRDD = numberEventsRDD.filter(linea => linea.HTTP_code.contains("200"))
     val no_sucess_wr_eventsRDD = numberEventsRDD.filter(linea => linea.HTTP_code.contains("402"))
     //.re
-    println("")
+    println()
     println("Ejercicio 1: ")
     println("**********************************************")
-    println("")
+    println()
+    println(today)
     val tot_aut = numberEvents_authRDD.foreachRDD(aut => aut.count)
     numberEvents_authRDD.foreachRDD(aut => println(" Num autorizaciones: " + aut.count))
     numberEventsRDD.foreachRDD(wr => println(" Number of web requests: " + wr.count))
@@ -93,14 +101,7 @@ object ejercicio1 {
     no_sucess_auth_eventsRDD.foreachRDD(sa => println(" Number of failed authentication event: " + sa.count))
     sucess_wr_eventsRDD.foreachRDD(sa => println(" Number of successful web requests: " + sa.count))
     no_sucess_wr_eventsRDD.foreachRDD(sa => println( "Number of failed web requests: " + sa.count))
-    println("")
-
-   // numberEventsRDD.print(100)
-
-    println("")
-    println("Ejercicio 2: ")
-    println("**********************************************")
-    println("")
+    println()
 
 
     //Start the streaming context

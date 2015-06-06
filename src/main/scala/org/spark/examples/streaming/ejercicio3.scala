@@ -16,6 +16,8 @@
 
 package org.spark.examples.streaming
 
+import java.util.Calendar
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.storage.StorageLevel
@@ -73,6 +75,10 @@ object ejercicio3 {
       new AuthEvent(arr(0), arr(1), arr(2), arr(3))
     })
 
+    //Obtengo la fecha del sistema para imprimirla
+
+    val today = Calendar.getInstance().getTime()
+
     val filteredRDD = numberEvents_authRDD.foreachRDD(rdds=>{
 
       //primero filtro los que son ataque y los sumo
@@ -81,6 +87,9 @@ object ejercicio3 {
         .reduceByKey((acum,nuevo)=>acum+nuevo)
 
       // Imprimo el total de los ataques por cada servidor
+      println()
+      println(today)
+
       comunRDD.foreach(host=>println("Número de ataques Total : " + host._1,host._2))
 
       // ahora con el ThresholdAuth que lo he subido a 18 para que no me
@@ -89,7 +98,7 @@ object ejercicio3 {
       comunRDD.filter(num => num._2>=ThresholdAuth)
         .foreach(host=>println("Num de ataques que superan el umbral: " + host._1,host._2))
 
-      println("")
+      println()
 
     })
 

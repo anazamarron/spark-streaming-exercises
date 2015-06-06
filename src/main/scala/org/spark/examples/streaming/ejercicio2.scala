@@ -16,6 +16,8 @@
 
 package org.spark.examples.streaming
 
+import java.util.Calendar
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.storage.StorageLevel
@@ -61,10 +63,15 @@ object ejercicio2 {
       new AuthEvent(arr(0), arr(1), arr(2), arr(3))
     }).foreachRDD(x=>x.cache())
 
-    println("")
+    //Obtengo la fecha del sistema para imprimirla
+
+    val today = Calendar.getInstance().getTime()
+
+    println()
     println("Ejercicio 2: ")
     println("**********************************************")
-    println("")
+    println()
+    println(today)
 
     val events = ssc.socketTextStream("localhost", 10002, StorageLevel.MEMORY_AND_DISK_SER).window(Seconds(10),Seconds(5))
     //Filter out empty lines and print the count
